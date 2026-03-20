@@ -5,7 +5,7 @@ function generateLicenseKey() {
   // Membuat 8 byte random lalu mengubahnya ke string HEX
   const randomBytes = crypto.randomBytes(6).toString('hex').toUpperCase();
   // Format menjadi FIN-XXXX-XXXX-XXXX
-  return `FIN-${randomBytes.slice(0,4)}-${randomBytes.slice(4,8)}-${randomBytes.slice(8,12)}`;
+  return `FIN-${randomBytes.slice(0, 4)}-${randomBytes.slice(4, 8)}-${randomBytes.slice(8, 12)}`;
 }
 
 // Berapa lisensi yang ingin Anda cetak hari ini?
