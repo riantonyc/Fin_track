@@ -11,24 +11,26 @@ export default defineConfig({
     react(),
     VitePWA({
       registerType: 'autoUpdate',
-      includeAssets: ['favicon.ico', 'apple-touch-icon.png', 'mask-icon.svg'],
+      includeAssets: ['favicon.svg'],
       manifest: {
-        name: 'FinTrack',
+        name: 'FinTrack Pencatat Keuangan',
         short_name: 'FinTrack',
-        description: 'PWA Personal Finance App',
-        theme_color: '#ffffff',
+        description: 'Aplikasi pencatat Pemasukan dan Pengeluaran harian offline-first terintegrasi.',
+        theme_color: '#0ea5e9',
         background_color: '#ffffff',
         display: 'standalone',
         icons: [
           {
-            src: 'pwa-192x192.png',
+            src: 'favicon.svg',
             sizes: '192x192',
-            type: 'image/png'
+            type: 'image/svg+xml',
+            purpose: 'any'
           },
           {
-            src: 'pwa-512x512.png',
+            src: 'favicon.svg',
             sizes: '512x512',
-            type: 'image/png'
+            type: 'image/svg+xml',
+            purpose: 'any maskable'
           }
         ]
       }
