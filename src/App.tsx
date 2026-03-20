@@ -6,6 +6,8 @@ import { Wallets } from './pages/Wallets'
 import { History } from './pages/History'
 import { Settings } from './pages/Settings'
 import { Calculator } from './pages/Calculator'
+import { License } from './pages/License'
+import { ProtectedRoute } from './components/ProtectedRoute'
 
 export default function App() {
   useEffect(() => {
@@ -18,12 +20,16 @@ export default function App() {
   return (
     <BrowserRouter>
       <Routes>
-        <Route path="/" element={<Layout />}>
-          <Route index element={<Dashboard />} />
-          <Route path="/wallets" element={<Wallets />} />
-          <Route path="/history" element={<History />} />
-          <Route path="/settings" element={<Settings />} />
-          <Route path="/calculator" element={<Calculator />} />
+        <Route path="/license" element={<License />} />
+
+        <Route element={<ProtectedRoute />}>
+          <Route path="/" element={<Layout />}>
+            <Route index element={<Dashboard />} />
+            <Route path="/wallets" element={<Wallets />} />
+            <Route path="/history" element={<History />} />
+            <Route path="/settings" element={<Settings />} />
+            <Route path="/calculator" element={<Calculator />} />
+          </Route>
         </Route>
 
         {/* Fallback */}
