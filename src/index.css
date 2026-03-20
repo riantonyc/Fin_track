@@ -1,0 +1,320 @@
+@import "tailwindcss";
+
+@theme {
+  --color-border: hsl(var(--border));
+  --color-input: hsl(var(--input));
+  --color-ring: hsl(var(--ring));
+  --color-background: hsl(var(--background));
+  --color-foreground: hsl(var(--foreground));
+
+  --color-primary: hsl(var(--primary));
+  --color-primary-foreground: hsl(var(--primary-foreground));
+
+  --color-secondary: hsl(var(--secondary));
+  --color-secondary-foreground: hsl(var(--secondary-foreground));
+
+  --color-destructive: hsl(var(--destructive));
+  --color-destructive-foreground: hsl(var(--destructive-foreground));
+
+  --color-muted: hsl(var(--muted));
+  --color-muted-foreground: hsl(var(--muted-foreground));
+
+  --color-accent: hsl(var(--accent));
+  --color-accent-foreground: hsl(var(--accent-foreground));
+
+  --color-popover: hsl(var(--popover));
+  --color-popover-foreground: hsl(var(--popover-foreground));
+
+  --color-card: hsl(var(--card));
+  --color-card-foreground: hsl(var(--card-foreground));
+
+  --radius-lg: var(--radius);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-sm: calc(var(--radius) - 4px);
+}
+
+@layer base {
+  :root {
+    --background: 0 0% 100%;
+    --foreground: 222.2 84% 4.9%;
+    --card: 0 0% 100%;
+    --card-foreground: 222.2 84% 4.9%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 222.2 84% 4.9%;
+    --primary: 221.2 83.2% 53.3%;
+    --primary-foreground: 210 40% 98%;
+    --secondary: 210 40% 96.1%;
+    --secondary-foreground: 222.2 47.4% 11.2%;
+    --muted: 210 40% 96.1%;
+    --muted-foreground: 215.4 16.3% 46.9%;
+    --accent: 210 40% 96.1%;
+    --accent-foreground: 222.2 47.4% 11.2%;
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 210 40% 98%;
+    --border: 214.3 31.8% 91.4%;
+    --input: 214.3 31.8% 91.4%;
+    --ring: 221.2 83.2% 53.3%;
+    --radius: 0.5rem;
+  }
+  .dark {
+    --background: 222.2 84% 4.9%;
+    --foreground: 210 40% 98%;
+    --card: 222.2 47.4% 11.2%;
+    --card-foreground: 210 40% 98%;
+    --popover: 222.2 47.4% 11.2%;
+    --popover-foreground: 210 40% 98%;
+    --primary: 217.2 91.2% 59.8%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 217.2 32.6% 17.5%;
+    --secondary-foreground: 210 40% 98%;
+    --muted: 217.2 32.6% 17.5%;
+    --muted-foreground: 215 20.2% 65.1%;
+    --accent: 217.2 32.6% 17.5%;
+    --accent-foreground: 210 40% 98%;
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 217.2 32.6% 17.5%;
+    --input: 217.2 32.6% 17.5%;
+    --ring: 224.3 76.3% 48%;
+  }
+}
+
+@layer base {
+  * {
+    border-color: var(--color-border);
+  }
+  body {
+    background-color: var(--color-background);
+    color: var(--color-foreground);
+    font-family: 'Inter', ui-sans-serif, system-ui, sans-serif;
+  }
+}
+
+/* ═══════════════════════════════════════════
+   LAYOUT ROOT
+═══════════════════════════════════════════ */
+.layout-root {
+  display: flex;
+  min-height: 100svh;
+  background-color: hsl(var(--background));
+}
+
+/* ═══════════════════════════════════════════
+   SIDEBAR (desktop only, hidden on mobile)
+═══════════════════════════════════════════ */
+.sidebar {
+  display: none;
+}
+
+@media (min-width: 768px) {
+  .sidebar {
+    display: flex;
+    flex-direction: column;
+    width: 240px;
+    min-height: 100svh;
+    background-color: hsl(var(--card));
+    border-right: 1px solid hsl(var(--border));
+    position: sticky;
+    top: 0;
+    flex-shrink: 0;
+    padding: 1.25rem 0.75rem;
+    gap: 0.25rem;
+  }
+}
+
+.sidebar-brand {
+  display: flex;
+  align-items: center;
+  gap: 0.625rem;
+  padding: 0.5rem 0.75rem;
+  margin-bottom: 1rem;
+  font-size: 1.125rem;
+  font-weight: 800;
+  letter-spacing: -0.025em;
+  color: hsl(var(--primary));
+}
+
+.sidebar-brand-icon {
+  width: 2rem;
+  height: 2rem;
+  border-radius: 0.5rem;
+  background-color: hsl(var(--primary));
+  color: hsl(var(--primary-foreground));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.sidebar-nav {
+  display: flex;
+  flex-direction: column;
+  gap: 0.125rem;
+  flex: 1;
+}
+
+.sidebar-nav-item {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.625rem 0.75rem;
+  border-radius: 0.625rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: hsl(var(--muted-foreground));
+  text-decoration: none;
+  transition: background-color 0.15s, color 0.15s;
+}
+
+.sidebar-nav-item:hover {
+  background-color: hsl(var(--muted));
+  color: hsl(var(--foreground));
+}
+
+.sidebar-nav-item.active {
+  background-color: hsl(var(--primary) / 0.12);
+  color: hsl(var(--primary));
+}
+
+.sidebar-footer {
+  padding-top: 0.75rem;
+  border-top: 1px solid hsl(var(--border));
+  margin-top: auto;
+}
+
+/* ═══════════════════════════════════════════
+   MAIN CONTENT AREA
+═══════════════════════════════════════════ */
+.layout-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+/* ═══════════════════════════════════════════
+   MOBILE HEADER (hidden on desktop)
+═══════════════════════════════════════════ */
+.mobile-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.875rem 1rem;
+  background-color: hsl(var(--card));
+  border-bottom: 1px solid hsl(var(--border));
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  box-shadow: 0 1px 8px rgba(0, 0, 0, 0.05);
+}
+
+.mobile-header-brand {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 1.125rem;
+  font-weight: 800;
+  letter-spacing: -0.025em;
+  color: hsl(var(--primary));
+}
+
+.mobile-header-settings {
+  color: hsl(var(--muted-foreground));
+  padding: 0.375rem;
+  border-radius: 0.5rem;
+  display: flex;
+  align-items: center;
+  transition: color 0.15s, background-color 0.15s;
+}
+
+.mobile-header-settings:hover {
+  color: hsl(var(--primary));
+  background-color: hsl(var(--muted));
+}
+
+@media (min-width: 768px) {
+  .mobile-header {
+    display: none;
+  }
+}
+
+/* ═══════════════════════════════════════════
+   PAGE MAIN + CONTENT
+═══════════════════════════════════════════ */
+.page-main {
+  flex: 1;
+  overflow-y: auto;
+  /* extra padding at bottom for mobile nav */
+  padding-bottom: 5rem;
+}
+
+@media (min-width: 768px) {
+  .page-main {
+    padding-bottom: 2rem;
+    /* center content with max width on wide screens */
+    display: flex;
+    justify-content: center;
+  }
+}
+
+.page-content {
+  padding: 1rem;
+  width: 100%;
+}
+
+@media (min-width: 768px) {
+  .page-content {
+    padding: 1.75rem 2rem;
+    max-width: 680px;
+    width: 100%;
+  }
+}
+
+/* ═══════════════════════════════════════════
+   MOBILE BOTTOM NAV (hidden on desktop)
+═══════════════════════════════════════════ */
+.mobile-nav {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  display: flex;
+  justify-content: space-around;
+  align-items: center;
+  background-color: hsl(var(--card));
+  border-top: 1px solid hsl(var(--border));
+  padding: 0.5rem 0.25rem;
+  padding-bottom: max(0.5rem, env(safe-area-inset-bottom));
+  box-shadow: 0 -4px 16px rgba(0, 0, 0, 0.06);
+  z-index: 20;
+}
+
+.mobile-nav-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.2rem;
+  padding: 0.375rem 0.625rem;
+  border-radius: 0.625rem;
+  font-size: 0.625rem;
+  font-weight: 700;
+  color: hsl(var(--muted-foreground));
+  text-decoration: none;
+  min-width: 3rem;
+  transition: color 0.15s, background-color 0.15s;
+}
+
+.mobile-nav-item:hover {
+  color: hsl(var(--foreground));
+  background-color: hsl(var(--muted));
+}
+
+.mobile-nav-item.active {
+  color: hsl(var(--primary));
+}
+
+@media (min-width: 768px) {
+  .mobile-nav {
+    display: none;
+  }
+}
