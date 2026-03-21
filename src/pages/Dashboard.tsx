@@ -3,7 +3,7 @@ import { useLiveQuery } from 'dexie-react-hooks'
 import { db, LOCAL_USER_ID } from '@/lib/db'
 import { formatRupiah, formatDate } from '@/lib/utils'
 import { Link } from 'react-router-dom'
-import { AreaChart, Area, XAxis, Tooltip, ResponsiveContainer } from 'recharts'
+import { PieChart, Pie, Cell, Tooltip as RechartsTooltip, ResponsiveContainer } from 'recharts'
 import { nanoid } from 'nanoid'
 import { CustomSelect } from '@/components/CustomSelect'
 import { CategoryIcon, IconMap } from '@/components/CategoryIcon'
@@ -12,6 +12,7 @@ import type { Transaction } from '@/lib/db'
 
 export function Dashboard() {
   const [formType, setFormType] = useState<'INCOME' | 'EXPENSE' | null>(null)
+  const [timeFilter, setTimeFilter] = useState<'Week' | 'Month' | 'Year'>('Month')
   
   // Edit State
   const [editingTransaction, setEditingTransaction] = useState<Transaction | null>(null)
@@ -40,7 +41,7 @@ export function Dashboard() {
     
     return txs.slice(0, 5).map(t => {
       const cat = categories.find(c => c.id === t.categoryId)
-      return { ...t, categoryName: cat?.name || '?', icon: cat?.icon || '•' }
+      return { ...t, categoryName: cat?.name || '?', icon: cat?.icon || 'Package' }
     })
   })
 
@@ -50,34 +51,68 @@ export function Dashboard() {
 
   const wallets = useLiveQuery(() => db.wallets.where('userId').equals(LOCAL_USER_ID).toArray())
 
-  const chartData = useLiveQuery(async () => {
+  // Time boundaries based on filter
+  const getBoundaries = () => {
     const now = new Date()
-    const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1).getTime()
-    const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59).getTime()
-    
-    const txs = await db.transactions
-      .where('userId')
-      .equals(LOCAL_USER_ID)
-      .filter(t => t.date >= startOfMonth && t.date <= endOfMonth)
-      .sortBy('date')
-
-    const daysInMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate()
-    const dailyData: Record<number, { income: number, expense: number }> = {}
-    for (let i = 1; i <= daysInMonth; i++) dailyData[i] = { income: 0, expense: 0 }
-
-    txs.forEach(t => {
-      const day = new Date(t.date).getDate()
-      if (t.type === 'INCOME') dailyData[day].income += t.amount
-      else dailyData[day].expense += t.amount
-    })
-
-    const result = []
-    const currentDay = now.getDate()
-    for (let i = 1; i <= currentDay; i++) {
-      result.push({ name: `${i}`, Pemasukan: dailyData[i].income, Pengeluaran: dailyData[i].expense })
+    if (timeFilter === 'Week') {
+      const start = new Date(now)
+      start.setDate(now.getDate() - now.getDay() + 1)
+      start.setHours(0,0,0,0)
+      const end = new Date(start)
+      end.setDate(start.getDate() + 6)
+      end.setHours(23,59,59,999)
+      return { start: start.getTime(), end: end.getTime() }
+    } else if (timeFilter === 'Month') {
+      const start = new Date(now.getFullYear(), now.getMonth(), 1).getTime()
+      const end = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59).getTime()
+      return { start, end }
+    } else {
+      const start = new Date(now.getFullYear(), 0, 1).getTime()
+      const end = new Date(now.getFullYear(), 11, 31, 23, 59, 59).getTime()
+      return { start, end }
     }
-    return result
-  }) || []
+  }
+
+  // Filtered Transations for Metrics
+  const filteredTransactions = useLiveQuery(async () => {
+    const { start, end } = getBoundaries()
+    return await db.transactions
+      .where('userId').equals(LOCAL_USER_ID)
+      .filter(t => t.date >= start && t.date <= end)
+      .toArray()
+  }, [timeFilter]) || []
+
+  const stats = filteredTransactions.reduce((acc, t) => {
+    if (t.type === 'INCOME') acc.income += t.amount
+    else acc.expense += t.amount
+    return acc
+  }, { income: 0, expense: 0 })
+
+  const categoryData = useLiveQuery(async () => {
+    const { start, end } = getBoundaries()
+    const txs = await db.transactions
+      .where('userId').equals(LOCAL_USER_ID)
+      .filter(t => t.date >= start && t.date <= end && t.type === 'EXPENSE')
+      .toArray()
+
+    const categories = await db.categories.where('userId').equals(LOCAL_USER_ID).toArray()
+    
+    const catMap: Record<string, {name: string, amount: number, color: string}> = {}
+    const colors = ['#34d399', '#3b82f6', '#a855f7', '#f59e0b', '#ef4444', '#ec4899', '#06b6d4'];
+    
+    txs.forEach(t => {
+      if(!catMap[t.categoryId]) {
+         const cat = categories.find(c => c.id === t.categoryId);
+         catMap[t.categoryId] = {
+           name: cat?.name || 'Lainnya',
+           amount: 0,
+           color: colors[Object.keys(catMap).length % colors.length]
+         }
+      }
+      catMap[t.categoryId].amount += t.amount;
+    })
+    return Object.values(catMap).sort((a,b) => b.amount - a.amount);
+  }, [timeFilter]) || []
 
   // Handlers
   const handleAddCategory = async (e: React.FormEvent) => {
@@ -127,7 +162,6 @@ export function Dashboard() {
       }
     })
 
-    // Reset form and close
     setAmount('')
     setCategoryId('')
     setNote('')
@@ -148,11 +182,11 @@ export function Dashboard() {
         <div className="grid grid-cols-2 gap-3 mt-5 relative z-10">
           <div className="bg-emerald-500/20 backdrop-blur-md rounded-2xl p-3 border border-emerald-500/30">
             <p className="text-emerald-50 text-[10px] sm:text-[11px] font-bold uppercase tracking-wider mb-1">Pemasukan (Bulan Ini)</p>
-            <p className="font-bold text-white tracking-tight leading-none text-lg sm:text-xl">{formatRupiah(chartData.reduce((s,d)=>s+d.Pemasukan,0))}</p>
+            <p className="font-bold text-white tracking-tight leading-none text-lg sm:text-xl">{formatRupiah(stats.income)}</p>
           </div>
           <div className="bg-destructive/20 backdrop-blur-md rounded-2xl p-3 border border-destructive/30">
             <p className="text-red-50 text-[10px] sm:text-[11px] font-bold uppercase tracking-wider mb-1">Pengeluaran (Bulan Ini)</p>
-            <p className="font-bold text-white tracking-tight leading-none text-lg sm:text-xl">{formatRupiah(chartData.reduce((s,d)=>s+d.Pengeluaran,0))}</p>
+            <p className="font-bold text-white tracking-tight leading-none text-lg sm:text-xl">{formatRupiah(stats.expense)}</p>
           </div>
         </div>
         
@@ -168,7 +202,7 @@ export function Dashboard() {
         )}
       </section>
 
-      {/* QUICK TRANSACTION FORM */}
+      {/* QUICK TRANSACTION FORM (CLASSIC STYLE) */}
       {formType && (
         <section className="bg-card p-5 rounded-3xl border shadow-sm animate-in slide-in-from-top-4 fade-in duration-300">
           <div className="flex items-center justify-between mb-5">
@@ -185,8 +219,7 @@ export function Dashboard() {
                 type="number" required
                 className="w-full px-4 py-3 bg-background border rounded-2xl text-2xl font-bold outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary transition shadow-sm"
                 value={amount} onChange={(e) => setAmount(e.target.value)}
-                placeholder="0"
-                autoFocus
+                placeholder="0" autoFocus
               />
             </div>
 
@@ -211,7 +244,7 @@ export function Dashboard() {
                       />
                       <datalist id="category-suggestions">
                         {Array.from(new Set([
-                          ...(formType === 'INCOME' ? ['Gaji', 'Bonus', 'Pemberian', 'Investasi', 'Freelance'] : ['Makanan', 'Transportasi', 'Belanja', 'Tagihan', 'Hiburan', 'Kesehatan', 'Pendidikan']),
+                          ...(formType === 'INCOME' ? ['Gaji', 'Bonus', 'Pemberian', 'Investasi'] : ['Makanan', 'Transportasi', 'Belanja', 'Tagihan', 'Hiburan', 'Kesehatan']),
                           ...(formCategories?.map(c => c.name) || [])
                         ])).map(name => (
                           <option key={name} value={name} />
@@ -280,37 +313,67 @@ export function Dashboard() {
         </section>
       )}
 
-      {/* CHART & RECENT TRANSACTIONS ONLY SHOW IF FORM IS HIDDEN (FOR CLEANER UI) */}
+      {/* METRICS & RECENT TRANSACTIONS */}
       {!formType && (
         <>
-          <section className="bg-card rounded-3xl border shadow-sm p-4 animate-in fade-in duration-500">
-            <h3 className="text-sm font-bold text-muted-foreground mb-4 px-2">Grafik Saldo Bulan Ini</h3>
-            <div className="h-32 w-full">
+          {/* Time Filters */}
+          <div className="bg-card border p-1.5 rounded-2xl flex gap-1 shadow-sm">
+            {['Week', 'Month', 'Year'].map(f => (
+              <button 
+                key={f}
+                onClick={() => setTimeFilter(f as any)}
+                className={`flex-1 font-semibold text-sm py-2 rounded-xl transition ${timeFilter === f ? 'bg-primary text-primary-foreground shadow' : 'text-muted-foreground hover:bg-muted'}`}
+              >
+                {f}
+              </button>
+            ))}
+          </div>
+
+          <section className="bg-card rounded-3xl border shadow-sm p-5 animate-in fade-in duration-500">
+            <h3 className="text-base font-bold text-foreground mb-6">Spending by Category</h3>
+            
+            <div className="h-44 w-full relative mb-6">
               <ResponsiveContainer width="100%" height="100%">
-                <AreaChart data={chartData}>
-                  <defs>
-                    <linearGradient id="colorIncome" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="#10b981" stopOpacity={0.4}/>
-                      <stop offset="95%" stopColor="#10b981" stopOpacity={0}/>
-                    </linearGradient>
-                    <linearGradient id="colorExpense" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="#ef4444" stopOpacity={0.4}/>
-                      <stop offset="95%" stopColor="#ef4444" stopOpacity={0}/>
-                    </linearGradient>
-                  </defs>
-                  <XAxis dataKey="name" hide />
-                  <Tooltip formatter={(value: any) => formatRupiah(Number(value) || 0)} />
-                  <Area type="monotone" dataKey="Pemasukan" stroke="#10b981" fillOpacity={1} fill="url(#colorIncome)" strokeWidth={2} />
-                  <Area type="monotone" dataKey="Pengeluaran" stroke="#ef4444" fillOpacity={1} fill="url(#colorExpense)" strokeWidth={2} />
-                </AreaChart>
+                <PieChart>
+                  <Pie
+                    data={categoryData}
+                    cx="50%" cy="50%"
+                    innerRadius={55} outerRadius={80}
+                    paddingAngle={3}
+                    dataKey="amount"
+                  >
+                    {categoryData.map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={entry.color} stroke="transparent" />
+                    ))}
+                  </Pie>
+                  <RechartsTooltip 
+                    formatter={(val: any) => formatRupiah(Number(val) || 0)}
+                    contentStyle={{ borderRadius: '12px', border: '1px solid var(--color-border)' }}
+                  />
+                </PieChart>
               </ResponsiveContainer>
+              {categoryData.length === 0 && (
+                <div className="absolute inset-0 flex items-center justify-center text-muted-foreground text-sm font-medium">Bulan ini belum ada pengeluaran</div>
+              )}
+            </div>
+
+            <div className="space-y-4">
+              {categoryData.map(cat => (
+                <div key={cat.name} className="flex justify-between items-center text-sm font-semibold">
+                  <div className="flex items-center gap-3">
+                    <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: cat.color }}></span>
+                    <span className="text-foreground/80">{cat.name}</span>
+                  </div>
+                  <span className="text-foreground tracking-tight">{formatRupiah(cat.amount)}</span>
+                </div>
+              ))}
             </div>
           </section>
           
           <section className="space-y-3 animate-in fade-in duration-500">
             <div className="flex items-center justify-between px-1">
-              <h3 className="text-lg font-bold">Transaksi Terakhir</h3>
-              <Link to="/history" className="text-sm text-primary font-bold hover:underline">Lihat semua</Link>
+              <h3 className="text-lg font-bold">Recent Transactions</h3>
+              <Link to="/history" className="text-sm text-primary font-bold hover:underline">See All</Link>
             </div>
             <div className="flex flex-col gap-3">
               {recentTransactions?.map(t => (
