@@ -56,7 +56,8 @@ export function Dashboard() {
     const now = new Date()
     if (timeFilter === 'Week') {
       const start = new Date(now)
-      start.setDate(now.getDate() - now.getDay() + 1)
+      const currentDay = start.getDay() || 7 // Konversi agar Minggu (0) menjadi hari ke-7
+      start.setDate(start.getDate() - currentDay + 1) // Set ke hari Senin di minggu yang sama
       start.setHours(0,0,0,0)
       const end = new Date(start)
       end.setDate(start.getDate() + 6)
