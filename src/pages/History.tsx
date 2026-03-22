@@ -63,12 +63,12 @@ export function History() {
       })
       return data
     } else if (timeFilter === 'Month') {
-      const weeks = ['W1', 'W2', 'W3', 'W4']
+      const weeks = ['1-7', '8-14', '15-21', '22-28', '29+']
       const data = weeks.map(w => ({ name: w, amount: 0 }))
       rawTransactions.forEach(t => {
         if (t.type === 'EXPENSE') {
           const d = new Date(t.date).getDate()
-          const wIdx = Math.min(Math.floor((d - 1) / 7), 3)
+          const wIdx = Math.min(Math.floor((d - 1) / 7), 4)
           data[wIdx].amount += t.amount
         }
       })
@@ -168,7 +168,7 @@ export function History() {
                 formatter={(val: any) => formatRupiah(Number(val) || 0)}
                 contentStyle={{ borderRadius: '12px', border: '1px solid var(--color-border)' }}
               />
-              <Bar dataKey="amount" radius={[6, 6, 6, 6]}>
+              <Bar dataKey="amount" radius={[4, 4, 0, 0]}>
                 {trendData.map((entry, index) => {
                   const isMax = entry.amount === Math.max(...trendData.map(d => d.amount));
                   return <Cell key={`cell-${index}`} fill={isMax ? 'var(--color-primary)' : 'hsl(var(--primary)/0.6)'} />

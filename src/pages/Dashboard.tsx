@@ -182,11 +182,11 @@ export function Dashboard() {
         
         <div className="grid grid-cols-2 gap-3 mt-5 relative z-10">
           <div className="bg-emerald-500/20 backdrop-blur-md rounded-2xl p-3 border border-emerald-500/30">
-            <p className="text-emerald-50 text-[10px] sm:text-[11px] font-bold uppercase tracking-wider mb-1">Pemasukan (Bulan Ini)</p>
+            <p className="text-emerald-50 text-[10px] sm:text-[11px] font-bold uppercase tracking-wider mb-1">Pemasukan ({timeFilter === 'Week' ? 'Minggu Ini' : timeFilter === 'Month' ? 'Bulan Ini' : 'Tahun Ini'})</p>
             <p className="font-bold text-white tracking-tight leading-none text-lg sm:text-xl">{formatRupiah(stats.income)}</p>
           </div>
           <div className="bg-destructive/20 backdrop-blur-md rounded-2xl p-3 border border-destructive/30">
-            <p className="text-red-50 text-[10px] sm:text-[11px] font-bold uppercase tracking-wider mb-1">Pengeluaran (Bulan Ini)</p>
+            <p className="text-red-50 text-[10px] sm:text-[11px] font-bold uppercase tracking-wider mb-1">Pengeluaran ({timeFilter === 'Week' ? 'Minggu Ini' : timeFilter === 'Month' ? 'Bulan Ini' : 'Tahun Ini'})</p>
             <p className="font-bold text-white tracking-tight leading-none text-lg sm:text-xl">{formatRupiah(stats.expense)}</p>
           </div>
         </div>
